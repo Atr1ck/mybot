@@ -1,0 +1,29 @@
+[project]
+name = "mashiro"
+version = "0.1.0"
+description = "Default template for PDM package"
+readme = "README.md"
+requires-python = "==3.12.*"
+authors = [
+    {name = "", email = ""},
+]
+dependencies = [
+    "bs4>=0.0.2",
+    "lxml>=5.3.0",
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.12.3",
+    "selenium>=4.24.0",
+]
+license = {text = "MIT"}
+
+[tool.nonebot]
+adapters = [
+    { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
+    { name = "Console", module_name = "nonebot.adapters.console" }
+]
+plugins = []
+plugin_dirs = ["src/plugins"]
+builtin_plugins = ["echo"]
+
+[tool.pdm]
+distribution = false
