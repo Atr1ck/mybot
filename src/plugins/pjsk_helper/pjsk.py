@@ -8,14 +8,22 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 import re
 import json
-from . import music_find
+from . import music_find, music_data_get
 from nonebot import get_plugin_config
 from .config import Config
+
 
 config = get_plugin_config(Config)
 
 pjsk_card = on_command("pjsk card")
 pjsk_music = on_command("pjsk music")
+pjsk_update = on_command("pjsk update")
+
+@pjsk_update.handle()
+async def handle_pjsk_card():
+    print("正在更新曲库")
+    music_data_get.update_music()
+    print("更新完成")
 
 @pjsk_card.handle()
 async def handle_psjk_card(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
@@ -34,8 +42,8 @@ async def handle_psjk_card(bot: Bot, event: GroupMessageEvent, args: Message = C
         await bot.send_group_msg(group_id=group_id, message="参数错误")
         return 
     # await bot.send_group_msg(group_id=group_id,message=MessageSegment.at(event.user_id) + " 正在获取卡面，请稍等")
-    chrome_driver_path = '/usr/bin/chromedriver'
-    service = Service(chrome_driver_path)
+    chromedriver_path = config.chromedriver_path
+    service = Service(chromedriver_path)
     driver = webdriver.Chrome(service=service)
     card_num = random.randint(1, 996)
     url = f'https://sekai.best/card/{card_num}'

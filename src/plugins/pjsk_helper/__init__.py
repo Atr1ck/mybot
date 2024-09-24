@@ -19,5 +19,3 @@ __plugin_meta__ = PluginMetadata(
         "author": "Atr1ck <3126670240@qq.com"
     }
 )
-
-

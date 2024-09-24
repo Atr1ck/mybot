@@ -3,9 +3,13 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from .config import Config
+from nonebot import get_plugin_config
 import time
 import re
 import json
+
+config = get_plugin_config(Config)
 
 def scroll_and_wait(driver, scroll_pause_time=1):
     last_height = driver.execute_script("return document.body.scrollHeight")  # 获取初始页面高度
@@ -26,42 +30,43 @@ def scroll_and_wait(driver, scroll_pause_time=1):
             break
         last_height = new_height
 
-chrome_driver_path = '/usr/bin/chromedriver'
-service = Service(chrome_driver_path)
-chrome_options = Options()
+def update_music():
+    chromedriver_path = config.chromedriver_path
+    service = Service(chromedriver_path)
+    chrome_options = Options()
 
-driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
 
-url = 'https://sekai.best/music'
-driver.get(url)
+    url = 'https://sekai.best/music'
+    driver.get(url)
 
-scroll_and_wait(driver)
+    scroll_and_wait(driver)
 
-with open("detect.txt", "w") as f:
-    f.write(driver.page_source)
-html = driver.page_source
+    with open("detect.txt", "w") as f:
+        f.write(driver.page_source)
+    html = driver.page_source
 
-soup = BeautifulSoup(html, "lxml")
-music_info = []
-for item in soup.find_all("div", class_="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-sm-6 MuiGrid-grid-md-4 MuiGrid-grid-lg-3 MuiGrid-grid-xl-3 css-1etv89n"):
-    try:
-        music_id_path = item.find("a")["href"]
-        match = re.search(r'\d+', music_id_path)
-        music_id = match.group()
+    soup = BeautifulSoup(html, "lxml")
+    music_info = []
+    for item in soup.find_all("div", class_="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-sm-6 MuiGrid-grid-md-4 MuiGrid-grid-lg-3 MuiGrid-grid-xl-3 css-1etv89n"):
+        try:
+            music_id_path = item.find("a")["href"]
+            match = re.search(r'\d+', music_id_path)
+            music_id = match.group()
 
-        music_name = item.find("div", class_="MuiCardMedia-root css-bc9mfn")["title"].split("|")[0].strip()
-        
-        music_cover_raw=  item.find("div", class_="MuiCardMedia-root css-bc9mfn")["style"]
-        music_cover_webp_re = re.search(r'url\("(.*?)"\)', music_cover_raw)
-        music_cover_webp = music_cover_webp_re.group(1)
-        music_cover_png = music_cover_webp.replace('.webp', '.png')
+            music_name = item.find("div", class_="MuiCardMedia-root css-bc9mfn")["title"].split("|")[0].strip()
+            
+            music_cover_raw=  item.find("div", class_="MuiCardMedia-root css-bc9mfn")["style"]
+            music_cover_webp_re = re.search(r'url\("(.*?)"\)', music_cover_raw)
+            music_cover_webp = music_cover_webp_re.group(1)
+            music_cover_png = music_cover_webp.replace('.webp', '.png')
 
-        music_info.append({
-            "music_id":music_id,
-            "music_name":music_name,
-            "music_cover_png":music_cover_png
-        })
-    except:
-        break
-with open("src/others/pjsk_music.json", "w",encoding="UTF-8") as json_file:
-    json.dump(music_info, json_file, ensure_ascii=False, indent=4)
+            music_info.append({
+                "music_id":music_id,
+                "music_name":music_name,
+                "music_cover_png":music_cover_png
+            })
+        except:
+            break
+    with open("src/others/pjsk_music.json", "w",encoding="UTF-8") as json_file:
+        json.dump(music_info, json_file, ensure_ascii=False, indent=4)
