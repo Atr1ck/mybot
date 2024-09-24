@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 import re
 import json
-from . import music_find, music_data_get
+from . import music_find, music_data_get, character_data_get
 from nonebot import get_plugin_config
 from .config import Config
 
@@ -17,10 +17,17 @@ config = get_plugin_config(Config)
 
 pjsk_card = on_command("pjsk card")
 pjsk_music = on_command("pjsk music")
-pjsk_update = on_command("pjsk update")
+pjsk_update_music = on_command("pjsk update music")
+pjsk_update_card = on_command("pjsk update card")
 
-@pjsk_update.handle()
-async def handle_pjsk_card():
+@pjsk_update_card.handle()
+async def hanlde_pjsk_update_card():
+    print("正在更新卡面")
+    character_data_get.update_character()
+    print("更新完成")
+
+@pjsk_update_music.handle()
+async def handle_pjsk_update_music():
     print("正在更新曲库")
     music_data_get.update_music()
     print("更新完成")

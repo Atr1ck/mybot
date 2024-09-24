@@ -42,8 +42,6 @@ def update_music():
 
     scroll_and_wait(driver)
 
-    with open("detect.txt", "w") as f:
-        f.write(driver.page_source)
     html = driver.page_source
 
     soup = BeautifulSoup(html, "lxml")
