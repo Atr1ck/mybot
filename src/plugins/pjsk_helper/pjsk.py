@@ -1,12 +1,7 @@
 from nonebot import on_command
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment, Message
 from nonebot.params import CommandArg
-import time
-from bs4 import BeautifulSoup
 import random
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-import re
 import json
 from . import music_find, music_data_get, character_data_get
 from nonebot import get_plugin_config
@@ -41,40 +36,47 @@ async def handle_psjk_card(bot: Bot, event: GroupMessageEvent, args: Message = C
     if group_id not in config.monitored_group and config.monitored_group != []:
         return 
     arg_text = args.extract_plain_text().strip()
-    if not arg_text:
-        select = random.randint(0,1)
-    elif arg_text == '1' or arg_text == '0':
-        select = arg_text
-    else:
-        await bot.send_group_msg(group_id=group_id, message="参数错误")
-        return 
-    # await bot.send_group_msg(group_id=group_id,message=MessageSegment.at(event.user_id) + " 正在获取卡面，请稍等")
-    chromedriver_path = config.chromedriver_path
-    service = Service(chromedriver_path)
-    driver = webdriver.Chrome(service=service)
-    card_num = random.randint(1, 996)
-    url = f'https://sekai.best/card/{card_num}'
-    driver.get(url)
-    while 1:
-        html = driver.page_source
-        soup = BeautifulSoup(html, "lxml")
-        item = soup.find('div', class_='MuiCardMedia-root card-img-root css-ugxqjx', role="img")
-        if item != None:
-            break
+
+    team = None
+    spe_character = None
+    card_type = None
+    for arg in list(arg_text.split()):
+        if arg in ["ln","mmj","vbs","ws","25s","vs"]:
+            team = arg
+        elif arg in ["normal", "train"]:
+            card_type = "normal" if arg == "normal" else "after_training"
         else:
-            time.sleep(1)
-    card_url_webp = item["style"]
-    card_normal_webp_re = re.search(r'url\("(.*?)"\)', card_url_webp)
-    card_normal_webp = card_normal_webp_re.group(1)
-    card_normal_png = card_normal_webp.replace('.webp', '.png')
-    card_train_png = card_normal_png.replace('normal', 'after_training')
-    png = {"0":card_normal_png, "1":card_train_png}
-    driver.quit()
+            spe_character = arg
+    
+    # await bot.send_group_msg(group_id=group_id,message=MessageSegment.at(event.user_id) + " 正在获取卡面，请稍等")
+    with open("src/others/pjsk_character.json", "r", encoding="UTF-8") as json_file:
+        character_info = json.load(json_file)
+    
+    if not card_type:
+        card_type = random.choice(["normal", "after_training"])
+    chara_id_min = 1
+    chara_id_max = 26
+    if team:
+        for character in character_info:
+            if team == character["team"]:
+                chara_id_min = character["id"]
+                chara_id_max = chara_id_min + 3 + int(team == "vs")
+                break
+    
+    chara_id = None
+    if spe_character:
+        chara_id = [i for i in character_info if i["name"] == spe_character][0]["id"]
+    
+    if not chara_id:
+        chara_id = random.randint(chara_id_min, chara_id_max)
+    
+    pic_id = random.randint(1, int([i for i in character_info if i["id"] == chara_id][0]["counts"]))
+    png_url = f"https://storage.sekai.best/sekai-jp-assets/character/member/res{chara_id:03}_no{pic_id:03}_rip/card_{card_type}.png"
     try:
-        await bot.send_group_msg(group_id=group_id, message=MessageSegment.image(png[select]))
+        await bot.send_group_msg(group_id=group_id, message=MessageSegment.image(png_url))
     except:
         # await bot.send_group_msg(group_id=group_id, message="该卡无特训后角色图，将发送特训前角色图")
-        await bot.send_group_msg(group_id=group_id, message=MessageSegment.image(png["0"]))
+        await bot.send_group_msg(group_id=group_id, message=MessageSegment.image(png_url.replace("after_training", "normal")))
 
 @pjsk_music.handle()
 async def pjsk_music(bot:Bot, event: GroupMessageEvent, args: Message = CommandArg()):
