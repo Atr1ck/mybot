@@ -12,20 +12,17 @@ config = get_plugin_config(Config)
 
 pjsk_card = on_command("pjsk card")
 pjsk_music = on_command("pjsk music")
-pjsk_update_music = on_command("pjsk update music")
-pjsk_update_card = on_command("pjsk update card")
+pjsk_update = on_command("pjsk update")
 
-@pjsk_update_card.handle()
-async def hanlde_pjsk_update_card():
-    print("正在更新卡面")
-    character_data_get.update_character()
-    print("更新完成")
-
-@pjsk_update_music.handle()
-async def handle_pjsk_update_music():
-    print("正在更新曲库")
-    music_data_get.update_music()
-    print("更新完成")
+@pjsk_update.handle()
+async def hanlde_pjsk_update_card(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
+    arg_text = args.extract_plain_text().strip()
+    if arg_text == "card":
+        character_data_get.update_character()
+    elif arg_text == "music":
+        music_data_get.update_music()
+    else:
+        await bot.send_group_msg(group_id=event.group_id, message="参数错误，请重试")
 
 @pjsk_card.handle()
 async def handle_psjk_card(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
